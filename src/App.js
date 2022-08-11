@@ -28,60 +28,71 @@ const App = () => {
     }
   ];
 
-  const [searchTerm, setSearchterm] = React.useState('');
+  const [searchTerm, setSearchterm] = React.useState(localStorage.getItem('search') || 'React');
+
+  React.useEffect(
+    () => {
+      localStorage.setItem('search', searchTerm);
+    },
+    [searchTerm]
+  );
 
   const handleSearch = (event) => {
-    setSearchterm(event.target.value);    
+    setSearchterm(event.target.value);
   }
 
   const searchedStories = stories.filter((story) => {
     return story.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
+  const handleClick = () => {
+    setSearchterm('bla bla bla');
+  };
+
   return (
     <div>
       <h1>{welcome.greeting + ' ' + welcome.title}</h1>
-      <Search onSearch={handleSearch}></Search>
+      <Search search={searchTerm} onSearch={handleSearch}></Search>
       <hr />
       <List list={searchedStories}></List>
+      <button onClick={handleClick}>Set to set search term to "bla bla bla"</button>
     </div>
   );
 }
 
-const List = (props) => {
+const List = ({ list }) => {
   return (
     <ul>
-      {props.list.map(item =>
-        (
-          <Item item={item} key={item.objectID}></Item>
-        )
-      )}
+      {list.map((item) => {
+        return <Item key={item.objectID} item={item}></Item>
+      })}
     </ul>
   );
 }
 
-const Item = (props) => {
+const Item = ({ item }) => {
   return (
-    <li key={props.item.objectID}>
+    <li>
       <span>
-        <a href={props.item.url}>{props.item.title}</a>
+        <a href={item.url}>{item.title}</a>
       </span>
-      <span>{props.item.author}</span>
-      <span>{props.item.num_comments}</span>
-      <span>{props.item.points}</span>
+      <span>{item.author}</span>
+      <span>{item.num_comments}</span>
+      <span>{item.points}</span>
     </li>
   );
 };
 
 
-const Search = (props) => {
-  const handleChange = (event) => {
-    props.onSearch(event);
-  };
+const Search = ({ search, onSearch }) => {
   return (
     <div>
       <label htmlFor="search">Search:</label>
-      <input id="search" type="text" onChange={handleChange}></input>
+      <input
+        id="search"
+        type="text"
+        value={search}
+        onChange={onSearch}></input>
     </div>
   );
 }
