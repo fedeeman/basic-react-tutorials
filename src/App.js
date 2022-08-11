@@ -29,7 +29,7 @@ const App = () => {
   ];
 
   const useStorageState = (key, initialState) => {
-  
+
     const [value, setValue] = React.useState(localStorage.getItem(key) || initialState);
     React.useEffect(
       () => {
@@ -57,7 +57,12 @@ const App = () => {
   return (
     <div>
       <h1>{welcome.greeting + ' ' + welcome.title}</h1>
-      <Search search={searchTerm} onSearch={handleSearch}></Search>
+      <InputWithLabel
+        id="search"
+        label="Search"
+        value={searchTerm}
+        onInputChange={handleSearch}>
+      </InputWithLabel>
       <hr />
       <List list={searchedStories}></List>
       <button onClick={handleClick}>Set to set search term to "bla bla bla"</button>
@@ -89,15 +94,16 @@ const Item = ({ item }) => {
 };
 
 
-const Search = ({ search, onSearch }) => {
+const InputWithLabel = ({ id, label, value, type='text', onInputChange }) => {
   return (
     <>
-      <label htmlFor="search">Search:</label>
+      <label htmlFor={id}>{label}:</label>
+      &nbsp;
       <input
-        id="search"
-        type="text"
-        value={search}
-        onChange={onSearch}></input>
+        id={id}
+        type={type}
+        value={value}
+        onChange={onInputChange}></input>
     </>
   );
 }
