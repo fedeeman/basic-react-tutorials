@@ -1,12 +1,26 @@
 import './App.css';
 import React from 'react';
 
+const SET_STORIES = 'SET_STORIES';
+const REMOVE_STORY = 'REMOVE_STORY';
 const welcome = {
   greeting: 'Hey',
   title: 'React'
 };
 
+const storiesReducer = (state, action) => {
 
+  switch (action.type) {
+    case SET_STORIES:
+      return action.payload;
+    case REMOVE_STORY:
+      return state.filter(
+        (story) => action.payload.objectID !== story.objectID
+      );
+    default:
+      throw new Error();
+  }
+};
 
 const App = () => {
   const initialStories = [
@@ -41,42 +55,45 @@ const App = () => {
   };
 
   const [searchTerm, setSearchTerm] = useStorageState('search', 'React');
-  const [stories, setStories] = React.useState([]);
+  const [stories, dispatchStories] = React.useReducer(storiesReducer, []);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
 
-  const getAsyncStories = () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        return resolve({data: {stories: initialStories}});
-      }, 2000)
-    }
-    );
-  }
+  const getAsyncStories = () =>
+    new Promise((resolve) =>
+      setTimeout(
+        () => resolve({ data: { stories: initialStories } }),
+        2000
+      ));
 
   React.useEffect(() => {
+    setIsLoading(true);
     getAsyncStories().then((result) => {
-      setStories(result.data.stories);
-    }, []);
-  });
+      dispatchStories({
+        type: 'SET_STORIES',
+        payload: result.data.stories
+      })
+      setIsLoading(false);
+    })
+      .catch(() => {
+        setIsError(true);
+      });
+  }, []);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   }
 
   const handleRemoveStory = (item) => {
-    console.log(item);
-    const newStories = stories.filter((story) => {
-      return item.objectID !== story.objectID;
+    dispatchStories({
+      type: 'REMOVE_STORY',
+      payload: item
     });
-    setStories(newStories);
   };
 
   const searchedStories = stories.filter((story) => {
     return story.title.toLowerCase().includes(searchTerm.toLowerCase());
   });
-
-  const handleClick = () => {
-    setSearchTerm('bla bla bla');
-  };
 
   return (
     <div>
@@ -87,14 +104,22 @@ const App = () => {
         value={searchTerm}
         isFocused
         onInputChange={handleSearch}>
-          <strong>Search:</strong>
+        <strong>Search:</strong>
       </InputWithLabel>
       <hr />
-      <List list={searchedStories} onRemoveItem={handleRemoveStory}></List>
-      <button onClick={handleClick}>Set to set search term to "bla bla bla"</button>
-    </div>
+
+      {isError && <p>Something went wrong ...</p>}
+
+      {isLoading ? (
+        <p>Loading...</p>
+      ) : (
+          < List list={searchedStories} onRemoveItem={handleRemoveStory}></List>
+        )
+      }
+    </div >
   );
 }
+
 
 const List = ({ list, onRemoveItem }) => {
   return (
@@ -121,7 +146,7 @@ const Item = ({ item, onRemoveItem }) => {
       <span>{item.num_comments}</span>
       <span>{item.points}</span>
       <span>
-        <button type="text" onClick={() => {onRemoveItem(item)}}>
+        <button type="text" onClick={() => { onRemoveItem(item) }}>
           Dismiss
         </button>
       </span>
@@ -130,7 +155,7 @@ const Item = ({ item, onRemoveItem }) => {
 };
 
 
-const InputWithLabel = ({ id, label, value, type='text', onInputChange, children, isFocused }) => {
+const InputWithLabel = ({ id, label, value, type = 'text', onInputChange, children, isFocused }) => {
 
   const inputRef = React.useRef();
   React.useEffect(() => {
